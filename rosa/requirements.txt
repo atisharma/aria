@@ -1,0 +1,8 @@
+av
+gpiozero
+luma.oled
+pillow
+psutil
+requests
+RPi.GPIO
+lgpio
