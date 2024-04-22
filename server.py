@@ -60,7 +60,7 @@ if __name__ == "__main__":
             nw.send_msg(str(vad_time))
         elif client_data == 'vad_check':
             nw.send_ack()
-            mic_chunk = nw.receive_audio(mic_params.get('buffer_size', None)*4)
+            mic_chunk = nw.receive_audio(mic_params.get('buffer_size', None) * 4)
             chunk_time = mic_params.get('buffer_size', None) / mic_params.get('samplerate', None)
             vad_status = vad.check(np.frombuffer(mic_chunk, np.float32).flatten(), chunk_time)
             nw.send_msg(str(vad_status))
