@@ -30,6 +30,7 @@ class Nw:
         self.receive_ack()
         
     def send_ack(self):
+        # TODO : handle interrupted connection
         self.con.sendall('ACK'.encode()) 
 
     def send_msg(self, msg):

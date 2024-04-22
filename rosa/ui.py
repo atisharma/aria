@@ -8,7 +8,7 @@ import numpy as np
 from PIL import Image, ImageSequence, ImageFont
 
 from rosa import oled, volume
-from rosa.devices import knob, switch_left, switch_right, push_button, green_led, red_led, yellow_led
+from rosa.devices import knob, switch_left, switch_right, push_button, green_led, red_led, yellow_led, cpu
 
 
 ###################################
@@ -94,11 +94,12 @@ class Ui:
 
         # oled-related things
         self.device = oled.get_device(self.params.get('luma_args'))
+
         self.term_font_size = 12
         self.term_font = ImageFont.truetype(str(Path(__file__).resolve().parent.joinpath("fonts", "spleen-6x12.otf")), self.term_font_size)
+
         self.large_font_size = 24
         self.large_font = ImageFont.truetype(str(Path(__file__).resolve().parent.joinpath("fonts", "spleen-12x24.otf")), self.large_font_size)
-        #self.large_font = ImageFont.truetype(str(Path(__file__).resolve().parent.joinpath("fonts", "monof56.ttf")), self.large_font_size)
 
         self.term = oled.terminal(self.device, self.term_font)
         self.term.animate = True
@@ -110,20 +111,20 @@ class Ui:
     def update_visual(self, user_name, data, time_color_warning=0):
         if not switch_right.is_active:
             if user_name == "You":
-                oled.plot_data(self.device, data, scale=1.2)
+                oled.plot_data(self.device, data, scale=2)
             elif user_name == "Aria":
                 oled.plot_data(self.device, data)
             
-    def load_visual(self, user_name):
-        if user_name == "system_init":
-            self.add_message("system", "waking...\n", new_entry=True)
-        elif user_name == "system_transition":
-            self.add_message("system", "\n", new_entry=True)
-        elif user_name == "system_muted_mic":
-            self.add_message("system", "microphone muted\n", new_entry=True)
-        elif user_name == "You":
+    def load_visual(self, ev):
+        if ev == "system_init":
+            show_status(self.device, self.large_font, self.large_font_size, "Waking...")
+        elif ev == "system_transition":
+            self.device.clear()
+        elif ev == "system_muted_mic":
+            show_status(self.device, self.large_font, self.large_font_size, "microphone muted")
+        elif ev == "You":
             yellow_led.on()
-        elif user_name == "Aria":
+        elif ev == "Aria":
             yellow_led.off()
     
     def add_message(self, user_name, text, new_entry=False, color_code_block=False, code_blocks=[]):

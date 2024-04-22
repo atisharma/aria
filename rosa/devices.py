@@ -9,7 +9,7 @@ Set up GPIO devices specific to Rosa.
 from time import sleep
 import sys
 
-from gpiozero import Button, RotaryEncoder, LED
+from gpiozero import Button, RotaryEncoder, LED, CPUTemperature
 
 
 green_led = LED(14)
@@ -24,3 +24,5 @@ switch_right = Button(6)
 knob = RotaryEncoder(23, 26)
 # and a 2-pin side (push button)
 push_button = Button(27)
+
+cpu = CPUTemperature()

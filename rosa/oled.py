@@ -112,16 +112,20 @@ def plot_data(device, data, scale=0.8):
     """
     # plot only the last data points, smoothed,
     # and rescale to [0, h]
-    d = scale * numpy.convolve(data, numpy.ones(8)/8.0, 'valid')
-    if numpy.abs(d.max()) > 0.01:
-        d = device.height * d + (device.height / 2)
+    d = numpy.convolve(data, numpy.ones(8)/8.0, 'valid')
+    if numpy.abs(d.max()) > 0.015:
+        d = scale * device.height * d + (device.height / 2)
         l = min(d.size, device.width)
-        with canvas(device, dither=True) as draw:
+        with canvas(device) as draw:
             for i in range(l):
                 y = int(d[int(i * device.width / l)])
-                draw.point((i, y + 1), fill="#888888")
+                draw.point((i, y + 1), fill="#666666")
                 draw.point((i, y), fill="#FFFFFF")
-                draw.point((i, y - 1), fill="#888888")
-    else:
-        device.clear()
-            
+                draw.point((i, y - 1), fill="#666666")
+
+def swipe(device):
+    for i in range(device.width):
+        with canvas(device) as draw:
+            draw.line([(i, 0), (i, device.height)], fill="white", width=2)
+
+    
