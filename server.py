@@ -8,7 +8,7 @@ import numpy as np
 from components.nw import Nw
 from components.vad import Vad
 from components.stt import Stt
-from components.llm_server import Llm
+from components.oai_server import Llm
 from components.tts_server import Tts
 from components.utils import remove_emojis
 from components.utils import remove_multiple_dots
