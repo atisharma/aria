@@ -8,7 +8,7 @@ import numpy as np
 from components.nw import Nw
 from components.ap import Ap
 from components.mic import Mic
-from components.ui import Ui
+from rosa.ui import Ui
 from components.utils import find_code_blocks
 # import scipy.io.wavfile as wf
 
