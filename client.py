@@ -28,7 +28,7 @@ def main(nw, ui, mic, ap, vad_params, llm_params):
             break
         except:
             time.sleep(1)
-    ui.add_message("system", "\nConnected!", new_entry=False)
+    ui.add_message("system", "Connected!", new_entry=False)
     print("Connected!")
     
     ap.play_sound(ap.listening_sound)
