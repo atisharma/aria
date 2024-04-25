@@ -23,7 +23,7 @@
       "params": {
         "device": "cuda:0",
         "model_name": "openai/whisper-large-v3",
-        "low_cpu_mem_usage": true,
+        "low_cpu_mem_usage": false,
         "attn": "flash_attention_2",
         "verbose": false
       }
@@ -36,7 +36,7 @@
         "context_length": 8000,
         "streaming_output": true,
         "chat_format": "llama-2",
-        "system_message": "You are Aria an AI entity. You are rude, sarcastic and funny. Please aim for concise responses, limiting them to a maximum of 20 words whenever possible. Please do not suggest for further assistance or help.",
+        "system_message": "You are Aria, an AI entity. You are rude, sarcastic and funny. Please aim for concise responses, limiting them to a maximum of 20 words whenever possible. Please do not suggest for further assistance or help.",
         "verbose": false
       }
     },
@@ -49,7 +49,7 @@
         "force_reload": false,
         "verbose": false,
         "assets": {
-            "voice_to_clone": "assets/sofia_hellen.wav"
+            "voice_to_clone": "assets/Ian_McKellan.wav"
         }
       }
     },
@@ -81,7 +81,7 @@
       "params": {
         "host_ip": "0.0.0.0",
         "port": 12345,
-        "client_target_ip": "0.0.0.0",
+        "client_target_ip": "192.168.1.176",
         "client_target_port": 12345
       }
     }

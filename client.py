@@ -20,7 +20,7 @@ def load_config(config_file):
 
 def main(nw, ui, mic, ap, vad_params, llm_params):
     nw.client_init()
-    ui.add_message("system", "Connecting...", new_entry=False)
+    ui.add_message("system", "Connecting...", new_entry=True)
     print('Connecting...')
     while True:
         try:
@@ -28,7 +28,7 @@ def main(nw, ui, mic, ap, vad_params, llm_params):
             break
         except:
             time.sleep(1)
-    ui.add_message("system", "Connected!", new_entry=False)
+    ui.add_message("system", "Connected!", new_entry=True)
     print("Connected!")
     
     ap.play_sound(ap.listening_sound)
@@ -83,7 +83,8 @@ def main(nw, ui, mic, ap, vad_params, llm_params):
                     nw.receive_ack()
                     nw.send_audio(mic_recording.tobytes())
                     stt_data = nw.receive_msg()
-                    if len(stt_data) != 1:
+                    # stt often hallucinates 'Thank you.", so ignore
+                    if len(stt_data) != 1 and stt_data not in vad_params.get('ignored_phrases', []):
                         ui.add_message("You", stt_data, new_entry=True)
                         nw.send_msg("llm_get_answer")
                         if not llm_params.get('streaming_output', None):
@@ -133,21 +134,6 @@ def main(nw, ui, mic, ap, vad_params, llm_params):
                                 elif llm_or_tts == "streaming_end":
                                     break
                             ap.check_audio_finished()
-                    else:
-                        # TODO add to llm context
-                        ui.add_message("You", "...", new_entry=True)
-                        nw.send_msg("fixed_answer")
-                        ui.add_message("Aria", "Did you say something?", new_entry=True)
-                        while True:
-                            nw.send_ack()
-                            tts_chunk_size = nw.receive_msg()
-                            if tts_chunk_size == "tts_end":
-                                break
-                            else:
-                                nw.send_ack()
-                                tts_chunk = nw.receive_audio(int(tts_chunk_size))
-                                ap.stream_sound(np.frombuffer(tts_chunk, np.float32).flatten(), update_ui=True)
-                        ap.check_audio_finished()
                     time.sleep(1)
                     ap.play_sound(ap.listening_sound)
                     ui.load_visual("You")
@@ -162,7 +148,7 @@ def main(nw, ui, mic, ap, vad_params, llm_params):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Aria.")
-    parser.add_argument("--config", default="default.json", help="Path to JSON config file in the configs folder")
+    parser.add_argument("--config", default="client.json", help="Path to JSON config file in the configs folder")
     args = parser.parse_args()
     
     config_path = join("configs", args.config)
@@ -172,8 +158,8 @@ if __name__ == "__main__":
     ap_params = config.get("Ap", {}).get("params", {})
     mic_params = config.get("Mic", {}).get("params", {})
     ui_params = config.get("Ui", {}).get("params", {})
-    vad_params = config.get("Vad", {}).get("params", {})
     llm_params = config.get("Llm", {}).get("params", {})
+    vad_params = config.get("Vad", {}).get("params", {})
     
     nw = Nw(params=nw_params)
     ui = Ui(params=ui_params)

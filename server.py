@@ -1,10 +1,12 @@
 import logging
-# logging.basicConfig(level=logging.DEBUG)
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARN)
+
 import argparse
 import json
 from os.path import join
+
 import numpy as np
+
 from components.nw import Nw
 from components.vad import Vad
 from components.stt import Stt
@@ -13,7 +15,6 @@ from components.tts_server import Tts
 from components.utils import remove_emojis
 from components.utils import remove_multiple_dots
 from components.utils import remove_code_blocks
-# import scipy.io.wavfile as wf
 
 
 def load_config(config_file):
@@ -22,7 +23,7 @@ def load_config(config_file):
     return json_data
         
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Aria.")
+    parser = argparse.ArgumentParser(description="Server.")
     parser.add_argument("--config", default="default.json", help="Path to JSON config file in the configs folder")
     args = parser.parse_args()
     
@@ -69,7 +70,6 @@ if __name__ == "__main__":
             mic_recording_size = nw.receive_msg()
             nw.send_ack()
             mic_recording = nw.receive_audio(int(mic_recording_size))
-            # wf.write('test.wav', mic_params.get('samplerate', None), np.frombuffer(mic_recording, np.float32).flatten())
             stt_data = stt.transcribe_translate(np.frombuffer(mic_recording, np.float32).flatten())
             nw.send_msg(stt_data)
         elif client_data == 'llm_get_answer':
@@ -82,5 +82,3 @@ if __name__ == "__main__":
                 # TODO handle emphasis
                 txt_for_tts = remove_emojis(remove_multiple_dots(remove_code_blocks(llm_data)))
                 tts.run_tts(nw, txt_for_tts)
-        elif client_data == 'fixed_answer':
-            tts.run_tts(nw, "Did you say something?")

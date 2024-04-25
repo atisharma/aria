@@ -1,6 +1,8 @@
 import tkinter as tk
 import numpy as np
-import scipy.fft
+import matplotlib.animation as anim
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from PIL import Image, ImageTk, ImageSequence
 
 
@@ -14,33 +16,35 @@ class Ui:
         self.transition_gif = self.params.get('assets', None).get('transition_gif', None)
         self.muted_mic_gif = self.params.get('assets', None).get('muted_mic_gif', None)
         
+        self.bg = '#050607'
+        self.fg = '#FFB900'
         self.root = tk.Tk()
         self.root.title(self.window_title)
         icon_image = tk.PhotoImage(file=self.icon)
         self.root.iconphoto(True, icon_image)
         self.root.geometry(f"{self.window_size}x{self.window_size}")
-        self.root.configure(bg="black")
+        self.root.configure(bg=self.bg)
         self.root.resizable(True, True)
         
         self.visual_widget = tk.Canvas(
             self.root, 
-            bg="black", 
+            bg=self.bg, 
             width=self.window_size, 
-            height=int(int(self.window_size)/2))
+            height=int(int(self.window_size) * 0.382))
         self.visual_widget.pack(expand=True, fill="both", padx=10, pady=10)
         
-        self.scrollbar = tk.Scrollbar(self.root, bg="black")
+        self.scrollbar = tk.Scrollbar(self.root, bg=self.bg)
         self.scrollbar.pack(side="right", fill="y")                        
         self.text_widget = tk.Text(self.root, 
-                                   bg="black", 
-                                   fg="white", 
+                                   bg=self.bg, 
+                                   fg=self.fg, 
                                    wrap="word",
                                    yscrollcommand=self.scrollbar.set, 
                                    state="disabled")
         self.text_widget.pack(expand=True, fill="both", padx=10, pady=10)
         self.scrollbar.configure(command=self.text_widget.yview)
         
-        self.context_menu = tk.Menu(self.root, tearoff=0, fg="white", bg="black")
+        self.context_menu = tk.Menu(self.root, tearoff=0, fg=self.fg, bg=self.bg)
         self.context_menu.add_command(label="Copy", command=self.copy_text, state="disabled")
         self.text_widget.bind("<Button-3>", self.show_context_menu)
         self.text_widget.bind("<Button-1>", self.close_context_menu)
@@ -69,20 +73,14 @@ class Ui:
         self.listening_min_radius = 50
         self.listening_radius = 100
         
-        self.speaking_BAR_COUNT = 5
-        # self.speaking_MIN_SIZES = [10, 30, 50, 30, 10]
-        self.speaking_MIN_SIZES = [0, 2, 5, 2, 0]
-        self.speaking_MAX_SIZES = [70, 90, 110, 90, 70]
-        self.speaking_BAR_WIDTH = 20
-        self.speaking_BAR_SPACING = 10
-        
-        you_color = '#71CA2C'
-        aria_color = "#7441B1"
-        code_color = "#2C87CA"
-        self.text_widget.tag_configure("user_name_You", foreground=you_color, font=("Arial", 12, "bold"))
-        self.text_widget.tag_configure("user_name_Aria", foreground=aria_color, font=("Arial", 12, "bold"))
-        self.text_widget.tag_configure("normal_text", foreground="white")
-        self.text_widget.tag_configure("code", foreground=code_color)
+        you_color = '#5D67C4'
+        aria_color = self.fg
+        code_color = "#BBBBBB"
+        self.text_widget.tag_configure("user_name_You", foreground=you_color, font=("Hack", 12, "bold"))
+        self.text_widget.tag_configure("user_name_Aria", foreground=aria_color, font=("Hack", 12, "bold"))
+        self.text_widget.tag_configure("normal_text", foreground=self.fg, font=("Hack", 12))
+        self.text_widget.tag_configure("normal", foreground=self.fg, font=("Hack", 12))
+        self.text_widget.tag_configure("code", foreground=code_color, font=("Hack", 12))
         
         self.root.bind("<Configure>", self.on_resize)
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -105,8 +103,7 @@ class Ui:
     
     def update_visual(self, user_name, data, time_color_warning=0):
         if user_name == "You":
-            spectrum = np.abs(scipy.fft.fft(data))
-            amplitude = spectrum.mean()
+            amplitude = np.linalg.norm(data).mean()
             max_radius = min(self.visual_widget.winfo_reqwidth(), self.visual_widget.winfo_reqheight()) * self.listening_max_percentage / 2
             scaled_radius = min(amplitude * self.listening_sensitivity_factor, max_radius)
             self.listening_radius = int(0.8 * self.listening_radius + 0.2 * max(scaled_radius, self.listening_min_radius))
@@ -128,34 +125,32 @@ class Ui:
                 self.listening_color = "#FFFFFF"
             self.visual_widget.coords(self.visual_widget_item, oval_coords)
             self.visual_widget.itemconfig(self.visual_widget_item, outline=self.listening_color , fill=self.listening_color)
+
         elif user_name == "Aria":
-            spectrum = np.abs(scipy.fft.fft(data))
-            amplitude = spectrum.mean()
-            for i in range(self.speaking_BAR_COUNT):
-                height = self.speaking_MIN_SIZES[i] + (self.speaking_MAX_SIZES[i] - self.speaking_MIN_SIZES[i]) * amplitude
-                self.visual_widget.coords(self.visual_widget_items[i], 
-                            self.visual_x + i * (self.speaking_BAR_WIDTH + self.speaking_BAR_SPACING) - (self.speaking_BAR_WIDTH + self.speaking_BAR_SPACING) * self.speaking_BAR_COUNT / 2, 
-                            self.visual_y - self.bar_height / 2 + height / 2 + self.bar_height / 2, 
-                            (self.visual_x + i * (self.speaking_BAR_WIDTH + self.speaking_BAR_SPACING) - (self.speaking_BAR_WIDTH + self.speaking_BAR_SPACING) * self.speaking_BAR_COUNT / 2) + self.speaking_BAR_WIDTH, 
-                            self.visual_y - self.bar_height / 2 - height / 2 + self.bar_height / 2)
+            self.line.set_data(range(len(data)), data)
+            #self.fig.canvas.flush_events()
             
     def load_visual(self, user_name):
         self.stop_visual()
+
         if user_name == "system_init":
             self.visual_widget_item = self.visual_widget.create_image(
                 self.visual_x, self.visual_y, image=self.loading_frames[0])
             self.start_visual()
             self.run_visual(self.loading_frames, 0)
+
         elif user_name == "system_transition":
             self.visual_widget_item = self.visual_widget.create_image(
                 self.visual_x, self.visual_y, image=self.transition_frames[0])
             self.start_visual()
             self.run_visual(self.transition_frames, 0)
+
         elif user_name == "system_muted_mic":
             self.visual_widget_item = self.visual_widget.create_image(
                 self.visual_x, self.visual_y, image=self.muted_mic_frames[0])
             self.start_visual()
             self.run_visual(self.muted_mic_frames, 0)
+            
         elif user_name == "You":
             oval_coords = (
                 self.visual_x - self.listening_radius,
@@ -167,16 +162,15 @@ class Ui:
                                            outline=self.listening_color, 
                                            width=2, 
                                            fill=self.listening_color)
+
         elif user_name == "Aria":
-            self.bar_height = max(self.speaking_MAX_SIZES) + 20
-            self.visual_widget_items = []
-            for i in range(self.speaking_BAR_COUNT):
-                x0 = self.visual_x + i * (self.speaking_BAR_WIDTH + self.speaking_BAR_SPACING) - (self.speaking_BAR_WIDTH + self.speaking_BAR_SPACING) * self.speaking_BAR_COUNT / 2
-                y0 = self.visual_y - self.bar_height / 2 - self.speaking_MIN_SIZES[i] / 2 + self.bar_height / 2
-                x1 = x0 + self.speaking_BAR_WIDTH
-                y1 = self.visual_y - self.bar_height / 2 + self.speaking_MIN_SIZES[i] / 2 + self.bar_height / 2
-                bar = self.visual_widget.create_rectangle(x0, y0, x1, y1, fill='#832DFF')
-                self.visual_widget_items.append(bar)
+            self.fig = plt.figure()
+            self.ax = self.fig.add_subplot(1, 1, 1)
+            self.ax.set_ylim(-1, 1)
+            self.line, = self.ax.plot(0, 0)
+            self.fig.canvas.flush_events()
+            self.visual_widget_item = FigureCanvasTkAgg(self.fig, self.root)
+            #self.visual_widget_item.get_tk_widget().grid(column=1, row=1)
     
     def stop_visual(self):
         self.visual_stop = True

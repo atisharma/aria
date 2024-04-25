@@ -2,6 +2,8 @@
 Use OpenAI-compatible API (e.g. Tabby, tgwui).
 """
 
+from datetime import datetime, timezone
+
 from openai import OpenAI, APIError
 from .utils import remove_emojis
 
@@ -13,7 +15,8 @@ class Llm:
         self.api_key = self.params.get('api_key', None)
         self.base_url = self.params.get('base_url', None)
         self.streaming_output = self.params.get('streaming_output', None)
-        self.system_message = self.params.get('system_message', None)
+        self.system_message_template = self.params.get('system_message', None)
+        self.location = self.params.get('location', None)
         self.verbose = self.params.get('verbose', None)
        
         self.llm = OpenAI(api_key=self.api_key, base_url=self.base_url)
@@ -24,6 +27,14 @@ class Llm:
                     "content": self.system_message
                 }
             ]
+
+    @property
+    def system_message(self):
+        tf = "%Y-%m-%d %H:%M %Z"
+        return "\n".join([
+            self.system_message_template,
+            f"The local date and time is now {datetime.now(timezone.utc).astimezone().strftime(tf)}"
+            ])
 
     def get_answer(self, nw, tts, data):
         self.messages.append(
